@@ -8,10 +8,10 @@ output: html_document
 
 - Episode 1: The contestants are ranked based on their pre-assigned ranks. (1-4)
 - Episode 2: The contestants are ranked based on their results after the Up-Down Battle.
-- Episode 3: Haein and Chaeyeon are shown to have dropped out with their final placement being tied for 27th place.
-- Episode 7: The contestants are shown with their ranking after the end of the first voting period.
+- Episode 3: Haein and Chaeyeon are shown to have dropped out with their final placement being tied for 27th place. There are now 26 contestants remaining.
+- Episode 7: The contestants are shown with their ranking after the end of the first voting period.  There are now 21 contestants remaining.
 - Episode 8: The contestants are shown with their ranking in the interim vote for the second voting period.
-- Episode 9: The contestants are shown with their ranking after the end of the second voting period.
+- Episode 9: The contestants are shown with their ranking after the end of the second voting period.  THere are now 14 contestants remaining.
 - Episode 10: The contestants are shown with their ranking after the final voting period. The 7 highest placing members debuted in EL7Z UP.
 
 ## El7Z UP Members Progression
@@ -40,14 +40,14 @@ library(ggplot2)
 library(readxl)
 QP_Ranking <- read_excel("QP-Ranking.xlsx")
 
-gfg_plot2 <- ggplot(QP_Ranking, aes(x=Episode, y=Ranking, group=Name, color=Name)) +
+gfg_plot2 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=name)) +
   geom_line() +
   geom_point() +
   xlab("Episode Number") +
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~Name)
+  facet_wrap(~name)
 
 gfg_plot2
 ```
@@ -61,14 +61,14 @@ library(ggplot2)
 library(readxl)
 QP_Ranking <- read_excel("QP-Ranking.xlsx")
 
-gfg_plot3 <- ggplot(QP_Ranking, aes(x=Episode, y=Ranking, group=Name, color=SignalSong)) +
+gfg_plot3 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=signal_song)) +
   geom_line() +
   geom_point() +
   xlab("Episode Number") +
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~SignalSong)
+  facet_wrap(~signal_song)
 
 gfg_plot3
 ```
@@ -82,14 +82,35 @@ library(ggplot2)
 library(readxl)
 QP_Ranking <- read_excel("QP-Ranking.xlsx")
 
-gfg_plot4 <- ggplot(QP_Ranking, aes(x=Episode, y=Ranking, group=Name, color=InitialGroup)) +
+gfg_plot4 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=initial_group)) +
   geom_line() +
   geom_point() +
   xlab("Episode Number") +
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~InitialGroup)
+  facet_wrap(~initial_group)
 
 gfg_plot4
+```
+
+## Grouped Dependent on their Remix Battle Songs
+
+```{r, fig.width=12, fig.height=10}
+library(ggplot2)
+library(dplyr)
+library(readxl)
+QP_Ranking <- read_excel("QP-Ranking.xlsx")
+QP_Ranking <- filter(QP_Ranking, remix_song != 'NA')
+
+gfg_plot5 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=remix_song)) +
+  geom_line() +
+  geom_point() +
+  xlab("Episode Number") +
+  ylab("Rank") +
+  scale_x_continuous(breaks=1:10) +
+  scale_y_continuous(trans="reverse", breaks=1:28) +
+  facet_wrap(~remix_song)
+
+gfg_plot5
 ```
