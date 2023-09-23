@@ -3,3 +3,5 @@
 *.rmd  linguist-detectable
 *.Rmd  linguist-detectable
 *.html linguist-vendored
+*.md linguist-language=Rmd
+*.md linguist-detectable
