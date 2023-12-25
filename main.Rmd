@@ -4,6 +4,12 @@ date: "2023-09-17"
 output: html_document
 ---
 
+# Introduction
+
+Why was this show chosen? Due to all artists being established, they have a fanbase, which could play into the results. On survival shows where aspiring trainees are trying to debut, many trainees are unknown which means that they don't have any influence from before the show starting.
+
+The format of the show also makes it better than other shows for analysis, due to the outcomes of the contestants being evenly divided, with 7 people eliminated or debuting during each phase. The question this analysis asks how does the various factors of a group/artist affect their placement on Queendom Puzzle?
+
 # Progression Guide
 
 - Episode 1: The contestants are ranked based on their pre-assigned ranks. (1-4)
@@ -14,21 +20,36 @@ output: html_document
 - Episode 9: The contestants are shown with their ranking after the end of the second voting period.  THere are now 14 contestants remaining.
 - Episode 10: The contestants are shown with their ranking after the final voting period. The 7 highest placing members debuted in EL7Z UP.
 
+## Importing
+
+```{r}
+library(ggplot2)
+library(readxl)
+library(dplyr)
+library(tidymodels)
+
+QP_data <- read_excel("QP-Ranking.xlsx")
+QP_Ranking <- as_tibble(QP_data)
+
+head(QP_Ranking)
+```
+
 ## El7Z UP Members Progression
 
 ```{r, fig.width=10, fig.height=10}
-library(ggplot2)
-library(readxl)
-QP_Ranking_EL7ZUP <- read_excel("QP-Ranking-EL7ZUP.xlsx")
 
-gfg_plot <- ggplot(QP_Ranking_EL7ZUP, aes(x=Episode, y=Ranking, group=Name, color=Name)) +
+QP_Ranking_EL7ZUP <- QP_Ranking %>%
+  filter(name == "Hwiseo" | name == "Nana" | name == "Yuki" | name == "Kei" | name == "Yeoreum" | name == "Yeonhee" | name == "Yeeun")
+
+gfg_plot <- ggplot(QP_Ranking_EL7ZUP, aes(x=episode, y=ranking, group=name, color=name)) +
   geom_line() +
   geom_point() +
   xlab("Episode Number") +
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~Name)
+  facet_wrap(~name) +
+  scale_colour_discrete(name="Name")
 
 gfg_plot
 ```
@@ -36,9 +57,6 @@ gfg_plot
 ## Entire Cast Progression
 
 ```{r, fig.width=12, fig.height=20}
-library(ggplot2)
-library(readxl)
-QP_Ranking <- read_excel("QP-Ranking.xlsx")
 
 gfg_plot2 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=name)) +
   geom_line() +
@@ -47,7 +65,8 @@ gfg_plot2 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=name
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~name)
+  facet_wrap(~name) +
+  scale_colour_discrete(name="Name")
 
 gfg_plot2
 ```
@@ -57,9 +76,6 @@ gfg_plot2
 - Note: Despite leaving before the performance, Chaeyeon and Haein are credited as being members of PICK on the top and DROP The Beat respectively.
 
 ```{r, fig.width=12, fig.height=10}
-library(ggplot2)
-library(readxl)
-QP_Ranking <- read_excel("QP-Ranking.xlsx")
 
 gfg_plot3 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=signal_song)) +
   geom_line() +
@@ -68,7 +84,8 @@ gfg_plot3 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=sign
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~signal_song)
+  facet_wrap(~signal_song) +
+  scale_colour_discrete(name="Signal Song")
 
 gfg_plot3
 ```
@@ -78,10 +95,6 @@ gfg_plot3
 - Note: Miru and Fye are credited as being from NMB48 and BNK48 respectively.
 
 ```{r, fig.width=12, fig.height=20}
-library(ggplot2)
-library(readxl)
-QP_Ranking <- read_excel("QP-Ranking.xlsx")
-
 gfg_plot4 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=initial_group)) +
   geom_line() +
   geom_point() +
@@ -89,7 +102,8 @@ gfg_plot4 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=init
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~initial_group)
+  facet_wrap(~initial_group) +
+  scale_colour_discrete(name="Affiliation")
 
 gfg_plot4
 ```
@@ -97,20 +111,31 @@ gfg_plot4
 ## Grouped Dependent on their Remix Battle Songs
 
 ```{r, fig.width=12, fig.height=10}
-library(ggplot2)
-library(dplyr)
-library(readxl)
-QP_Ranking <- read_excel("QP-Ranking.xlsx")
-QP_Ranking <- filter(QP_Ranking, remix_song != 'NA')
+QP_Ranking_Remix <- filter(QP_Ranking, remix_song != 'NA')
 
-gfg_plot5 <- ggplot(QP_Ranking, aes(x=episode, y=ranking, group=name, color=remix_song)) +
+gfg_plot5 <- ggplot(QP_Ranking_Remix, aes(x=episode, y=ranking, group=name, color=remix_song)) +
   geom_line() +
   geom_point() +
   xlab("Episode Number") +
   ylab("Rank") +
   scale_x_continuous(breaks=1:10) +
   scale_y_continuous(trans="reverse", breaks=1:28) +
-  facet_wrap(~remix_song)
+  facet_wrap(~remix_song) +
+  scale_colour_discrete(name="Remix")
 
 gfg_plot5
+```
+
+# Creating a model
+
+To analyze popularity, I will use the ranks given on the first episode of the show that were based on their prior career experience in the industry. This is a fair metric of popularity to compare, except for the fact that Fye and Miru are ranked low as they have no K-pop experience, despite having a fanbase outside of it which could influence the votes.
+
+```{r, fig.width=12, fig.height=10}
+
+summarized_data <- QP_Ranking %>%
+                   group_by(name)
+summarized_split <- initial_split(summarized_data, prop = 0.75, strata = initial_rank)
+
+summarized_training <- training(summarized_split)
+summarized_testing <- testing(summarized_split)
 ```
