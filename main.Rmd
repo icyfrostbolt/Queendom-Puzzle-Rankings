@@ -17,7 +17,7 @@ The format of the show also makes it better than other shows for analysis, due t
 - Episode 3: Haein and Chaeyeon are shown to have dropped out with their final placement being tied for 27th place. There are now 26 contestants remaining.
 - Episode 7: The contestants are shown with their ranking after the end of the first voting period.  There are now 21 contestants remaining.
 - Episode 8: The contestants are shown with their ranking in the interim vote for the second voting period.
-- Episode 9: The contestants are shown with their ranking after the end of the second voting period.  THere are now 14 contestants remaining.
+- Episode 9: The contestants are shown with their ranking after the end of the second voting period. There are now 14 contestants remaining.
 - Episode 10: The contestants are shown with their ranking after the final voting period. The 7 highest placing members debuted in EL7Z UP.
 
 ## Importing
@@ -26,7 +26,9 @@ The format of the show also makes it better than other shows for analysis, due t
 library(ggplot2)
 library(readxl)
 library(dplyr)
+library(tidyverse)
 library(tidymodels)
+library(kknn)
 
 QP_data <- read_excel("QP-Ranking.xlsx")
 QP_Ranking <- as_tibble(QP_data)
@@ -130,12 +132,102 @@ gfg_plot5
 
 To analyze popularity, I will use the ranks given on the first episode of the show that were based on their prior career experience in the industry. This is a fair metric of popularity to compare, except for the fact that Fye and Miru are ranked low as they have no K-pop experience, despite having a fanbase outside of it which could influence the votes.
 
-```{r, fig.width=12, fig.height=10}
+```{r, fig.width=7, fig.height=7}
+
+set.seed(377) 
 
 summarized_data <- QP_Ranking %>%
-                   group_by(name)
+                   group_by(name) %>%
+                   filter(episode != 1)
+
+summarized_data$initial_rank <- as.factor(summarized_data$initial_rank)
 summarized_split <- initial_split(summarized_data, prop = 0.75, strata = initial_rank)
 
 summarized_training <- training(summarized_split)
 summarized_testing <- testing(summarized_split)
+
+training_graph <- ggplot(summarized_training, aes(x = episode, y = ranking, color = initial_rank)) +
+                 geom_point() +
+                 geom_jitter() +
+                 labs(x = "Episode", y = "Ranking",
+                      color = "Initial Ranking", title = "Ranking vs Episode") +
+                 scale_x_continuous(breaks=1:10) +
+                 scale_y_continuous(trans="reverse", breaks=1:28) +
+                 theme(text = element_text(size = 15))
+
+
+training_graph
+```
+
+Note: the graph uses geom_jitter, all ranks and episodes are whole numbers so any point that appears to be off-center is a value representing the closest rank value and episode value.
+
+```{r}
+ranking_info <- summarized_training %>%
+                    group_by(initial_rank) %>%
+                    summarize(mean_rank = mean(ranking))
+```
+
+```{r}
+set.seed(377) 
+
+rank_recipe <- recipe(initial_rank ~ episode + ranking, data = summarized_training) %>%
+   step_scale(all_predictors()) %>%
+   step_center(all_predictors())
+
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 4) %>%
+            set_engine("kknn") %>%
+            set_mode("classification")
+
+rank_vfold <- vfold_cv(summarized_training, v = 5, strata = initial_rank)
+
+k_vals <- tibble(neighbors = seq(from = 1, to = 100, by = 5))
+
+knn_flow <- workflow() %>%
+  add_recipe(rank_recipe) %>%
+  add_model(knn_spec) %>%
+  fit(data = summarized_training)
+
+mutated_QP_Ranking <- QP_Ranking |>
+  mutate(classification = as_factor(initial_rank)) |>
+  select(classification, episode, ranking)
+
+ep_grid <- seq(min(mutated_QP_Ranking$episode),
+                max(mutated_QP_Ranking$episode),
+                length.out = 100)
+rank_grid <- seq(min(mutated_QP_Ranking$ranking),
+                max(mutated_QP_Ranking$ranking),
+                length.out = 100)
+asgrid <- as_tibble(expand.grid(episode = ep_grid,
+                                ranking = rank_grid))
+
+knnPredGrid <- predict(knn_flow, asgrid)
+
+prediction_table <- bind_cols(knnPredGrid, asgrid) %>%
+  rename(classification = .pred_class)
+
+prediction_table
+
+wkflw_plot <- ggplot() +
+  geom_point(data = mutated_QP_Ranking,
+             mapping = aes(x = episode,
+                           y = ranking,
+                           color = classification),
+             alpha = 0.75) +
+  geom_point(data = prediction_table,
+             mapping = aes(x = episode,
+                           y = ranking,
+                           color = classification),
+             alpha = 0.02,
+             size = 5) +
+  labs(color = "Initial Rank",
+       x = "Episode",
+       y = "Ranking") +
+  scale_color_manual(values = c("brown2", "goldenrod1", "dodgerblue", "mediumorchid1")) +
+  scale_x_continuous(breaks=1:10) +
+  scale_y_continuous(trans="reverse", breaks=1:28) +
+  theme(text = element_text(size = 12))
+
+wkflw_plot
+
+
 ```
